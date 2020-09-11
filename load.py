@@ -43,13 +43,21 @@ def loadFiles(files):
 
   dfImuAll = pd.concat(arrDfsImu).reset_index().set_index(['file','heartbeat','ts'])
   dfBpAll = pd.concat(arrDfsBp).reset_index().set_index(['file','heartbeat'])
+  
   return dfImuAll, dfBpAll
 
-def loadFilePath(filepath=None):
+def loadFilePath(filepath=None, drop_na=True):
   filenames = glob.glob(filepath)
   # print('Found', len(filenames), 'Data Files')
 
   arrFilenameSubset = pd.Series(filenames).to_list()
   dfImuAll, dfBpAll = loadFiles(arrFilenameSubset)
   
-  return dfImuAll.astype('float16'), dfBpAll
+  if drop_na :
+    dfImu = dfImuAll.dropna() #.head(1000*500)    ### TODO : REMOVE THE "HEAD" call
+    dfBp = dfImu.groupby(INDICIES).first().merge(dfBpAll, on=INDICIES, how='left')[dfBpAll.columns]
+    print('dfImu Before & After drop NAs : ', dfImuAll.shape, dfImu.shape, 'Dropped # Rows :', dfImuAll.shape[0] - dfImu.shape[0])
+    print('dfBp Before & After drop NAs : ', dfBpAll.shape, dfBp.shape, 'Dropped # Rows :', dfBpAll.shape[0] - dfBp.shape[0])
+
+
+  return dfImu.astype('float16'), dfBp
