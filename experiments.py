@@ -34,7 +34,7 @@ def split_by_group(group_col, dfImu, dfBp, indices=['file', 'heartbeat'], split_
 
 # maybe use PredefinedSplit instead?
 ### fix this fn.. dfAllInds isn't being used. Should use dfTrainInds and dfTestInds to create the train&test indices..
-def split_by_query(trainQ, testQ, dfBp, indices=['file', 'heartbeat'], split_kwargs={'n_splits':4, 'random_state':0}):
+def split_by_query(trainQ, testQ=None, dfBp=None, indices=['file', 'heartbeat'], split_kwargs={'n_splits':4, 'random_state':0}):
   dfAllInds = dfBp.reset_index().drop_duplicates()
 
   # trainQ = 'index==index' if trainQ=='' else trainQ
