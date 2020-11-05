@@ -27,8 +27,9 @@ def getImuDataFromMatlab(dictImuData):
 
 def getContinuousDataFromMatlab(dictImuData):
   dfBpRaw = pd.concat([
-    pd.DataFrame(dictImuData['bio_data'][:,[14,15,17]], columns=BP_COLS),
-    pd.DataFrame(dictImuData['bio_ts']).T.rename(columns={0:'ts'})
+    pd.DataFrame(dictImuData['bio_data'][:,[17,14,15]], columns=BP_COLS),
+    pd.DataFrame(dictImuData['bio_ts']).T.rename(columns={0:'ts'}),
+    pd.DataFrame(dictImuData['bio_data'][:,12], columns=['ecgTs'])
   ], axis=1)
   dfBpRaw.ts = pd.to_timedelta(dfBpRaw.ts, unit='s')
 
