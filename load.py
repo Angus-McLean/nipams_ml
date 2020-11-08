@@ -96,14 +96,14 @@ def loadFilePath(filepaths=None, drop_na=True, continuous=False, parseFileName=F
 ## Parse Patient, TestType and TestNum.
 def parseFileInfo(df, filenameCol='file'):
   ## TODO : Speed this up by taking only unique filenames, parse those, then do a join on original df
-  a = df[filenameCol].str.extract('(sub\d+)_([A-Z]+)(\d*)\.mat')
+  a = df[filenameCol].str.extract('(sub\d+)_([A-z]+)(\d*)\.mat')
   a.columns = ['patient','test_type','test_num']
   return pd.concat([df, a], axis=1)
 
 ## Downsample Signals to appropriate frequency
-def interpolateDatasets(dfImu, dfBp, freq='5ms', groupbyCol='file'):
-  dfBpSamp = dfBp.groupby(groupbyCol).apply(lambda x:x.resample(freq).interpolate()).reset_index(groupbyCol, drop=True)
-  dfImuSamp = dfImu.groupby(groupbyCol).apply(lambda x:x.resample(freq).interpolate()).reset_index(groupbyCol, drop=True)
+def interpolateDatasets(dfImu, dfBp, freq='5ms', groupbyCol='file', method='linear'):
+  dfBpSamp = dfBp.groupby(groupbyCol).apply(lambda x:x.resample(freq).interpolate(method=method)).reset_index(groupbyCol, drop=True)
+  dfImuSamp = dfImu.groupby(groupbyCol).apply(lambda x:x.resample(freq).interpolate(method=method)).reset_index(groupbyCol, drop=True)
   
   # interpolation doesn't work from strings.. fill in the NaNs
   serBpNonNumCols = dfBpSamp.columns[~dfBpSamp.columns.isin(BP_COLS)]

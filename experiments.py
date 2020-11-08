@@ -7,6 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.model_selection import KFold, ShuffleSplit, TimeSeriesSplit, GroupKFold
 
+import matplotlib.pyplot as plt
 
 ## All split_by_* functions return [{'train':<indices for train set>, 'test':<indices for test set>},...]
 
@@ -104,16 +105,52 @@ def testPipeline(dfImu, dfBp, pipeline, indices, verbose=False, dropCols=BP_COLS
         
     return testResults
 
+
+### PLOTTING RESULTS ###
+
 def getProps(arr, prop):
   return [a[prop] for a in arr]
 
+def viewResults(testResults):
+  display(resultsToAvgScore(testResults))
+  plotCorrelations(testResults)
+
 def resultsToAvgScore(testResults):
+  resultsDf = resultsToDf(testResults)
+
   return {
-    'mean_absolute_error':np.mean(getProps(testResults,'mean_absolute_error')),
-    'r2_score':np.mean(getProps(testResults,'r2_score'))
+    "mean_absolute_error" : (resultsDf.preds - resultsDf.target).abs().mean(),
+    "error_std" : (resultsDf.preds - resultsDf.target).std(),
+    'r2_score':np.mean(getProps(testResults,'r2_score')),
+    "95_loa" : (resultsDf.preds - resultsDf.target).quantile(0.95)
   }
 
 def resultsToDf(testResults):
   dfRes = pd.concat(getProps(testResults, 'y_test')).to_frame()
   dfRes['preds'] = np.concatenate(getProps(testResults, 'preds'))
+  dfRes['target'] = dfRes[dfRes.columns[dfRes.columns!='preds'][0]]
   return dfRes
+
+def plotCorrelations(rfResults):
+  resultsDf = resultsToDf(rfResults)
+
+  display(resultsDf.plot.scatter('target','preds', title='Random Forest Model'))
+  plt.show()
+  plotDifferentialVsMean(resultsDf)
+  
+def plotDifferentialVsMean(resultsDf):
+  data1 = np.asarray(resultsDf.target)
+  data1[data1>200]= np.nan
+  data2 = np.asarray(resultsDf['preds'])
+  mean = np.mean([data1, data2], axis=0)
+  diff = data2 - data1  # Difference between data1 and data2
+  md = np.nanmean(diff)  # Mean of the difference
+  sd = np.nanstd(diff, axis=0)# Standard deviation of the difference
+  loa  = 1.96*sd
+  plt.scatter(mean, diff)
+  plt.axhline(md,  color='gray', linestyle='--')
+  plt.axhline(md + loa, color='gray', linestyle='--')
+  plt.axhline(md - loa, color='gray', linestyle='--')
+  plt.xlabel('Average [mmHg]')
+  plt.ylabel('Difference [mmHg]')
+  plt.show()
